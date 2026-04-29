@@ -1,0 +1,32 @@
+# Environment / Secrets
+.env
+*.env
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Node / React
+node_modules/
+dist/
+
+# ChromaDB
+chroma_data/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+*.log
+logs/
