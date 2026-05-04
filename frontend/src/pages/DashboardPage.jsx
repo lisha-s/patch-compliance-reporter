@@ -1,64 +1,41 @@
-
+/* eslint-disable */
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useWindowSize } from '../hooks/useWindowSize'
+import Navbar from '../components/Navbar'
 import patchService from '../services/patchService'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell
 } from 'recharts'
 
-// ── Navbar ────────────────────────────────────────────
-function Navbar({ user, logout, navigate }) {
-  return (
-    <div style={{ backgroundColor: '#1B4F8A', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-        <span style={{ color: 'white', fontWeight: '700', fontSize: '16px' }}>
-          🛡 Patch Compliance Reporter
-        </span>
-        <button onClick={() => navigate('/')}
-          style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: 'none', padding: '5px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
-          📋 Records
-        </button>
-        <button onClick={() => navigate('/dashboard')}
-          style={{ background: 'rgba(255,255,255,0.3)', color: 'white', border: '1px solid rgba(255,255,255,0.5)', padding: '5px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
-          📊 Dashboard
-        </button>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {user && <span style={{ color: '#bfdbfe', fontSize: '13px' }}>👤 {user.username}</span>}
-        <button onClick={logout}
-          style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '5px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
-          Logout
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ── KPI Card ──────────────────────────────────────────
+// ── KPI Card ───────────────────────────────────────────
 function KpiCard({ title, value, subtitle, color, icon }) {
   return (
-    <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 6px rgba(0,0,0,0.08)', borderLeft: `4px solid ${color}`, flex: 1, minWidth: '180px' }}>
+    <div style={{
+      background: 'white', borderRadius: '12px', padding: '20px',
+      boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
+      borderLeft: `4px solid ${color}`, flex: 1, minWidth: '140px'
+    }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>
+          <p style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>
             {title}
           </p>
-          <p style={{ fontSize: '32px', fontWeight: '800', color: '#111827', margin: '0 0 4px' }}>
+          <p style={{ fontSize: '28px', fontWeight: '800', color: '#111827', margin: '0 0 4px' }}>
             {value ?? '—'}
           </p>
           {subtitle && (
             <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>{subtitle}</p>
           )}
         </div>
-        <span style={{ fontSize: '28px' }}>{icon}</span>
+        <span style={{ fontSize: '24px' }}>{icon}</span>
       </div>
     </div>
   )
 }
 
-// ── Chart colours per severity ────────────────────────
 const SEVERITY_COLORS = {
   CRITICAL: '#dc2626',
   HIGH:     '#ea580c',
@@ -72,7 +49,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { isMobile } = useWindowSize()
 
   useEffect(() => {
     const load = async () => {
@@ -80,20 +57,11 @@ export default function DashboardPage() {
       try {
         const res = await patchService.getStats()
         setStats(res.data)
+        setError(null)
       } catch {
-        // Backend not running — use mock data so UI still works
         setStats({
-          total:          0,
-          compliant:      0,
-          nonCompliant:   0,
-          pending:        0,
-          avgScore:       0,
-          bySeverity: [
-            { severity: 'CRITICAL', count: 0 },
-            { severity: 'HIGH',     count: 0 },
-            { severity: 'MEDIUM',   count: 0 },
-            { severity: 'LOW',      count: 0 },
-          ]
+          total: 0, compliant: 0, nonCompliant: 0,
+          pending: 0, avgScore: 0, bySeverity: []
         })
         setError('Backend not connected — showing empty dashboard')
       } finally {
@@ -106,40 +74,50 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <>
-        <Navbar user={user} logout={logout} navigate={navigate} />
+        <Navbar activePage="dashboard" />
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-          <p style={{ color: '#6b7280' }}>Loading dashboard…</p>
+          <div style={{ width: '36px', height: '36px', border: '4px solid #e5e7eb', borderTopColor: '#1B4F8A', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
       </>
     )
   }
 
-  // ── Chart data ──────────────────────────────────────
-  const chartData = stats?.bySeverity ?? []
+  const chartData      = stats?.bySeverity ?? []
+  const complianceRate = stats?.total
+    ? Math.round((stats.compliant / stats.total) * 100) : 0
 
   return (
     <>
-      <Navbar user={user} logout={logout} navigate={navigate} />
+      <Navbar activePage="dashboard" />
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 16px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '16px' : '32px 16px' }}>
 
-        {/* Page title */}
-        <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '0 0 4px' }}>
-            Dashboard
-          </h1>
-          <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>
-            Overview of patch compliance across all assets
-          </p>
-          {error && (
-            <p style={{ color: '#ca8a04', fontSize: '12px', marginTop: '6px', background: '#fef9c3', padding: '6px 12px', borderRadius: '6px', display: 'inline-block' }}>
-              ⚠️ {error}
+        {/* ── Header ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 'bold', color: '#111827', margin: '0 0 4px' }}>
+              Dashboard
+            </h1>
+            <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>
+              Overview of patch compliance across all assets
             </p>
-          )}
+            {error && (
+              <p style={{ color: '#ca8a04', fontSize: '12px', marginTop: '8px', background: '#fef9c3', padding: '6px 12px', borderRadius: '6px', display: 'inline-block', margin: '8px 0 0' }}>
+                ⚠️ {error}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => navigate('/analytics')}
+            style={{ backgroundColor: '#1B4F8A', color: 'white', padding: '9px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap' }}
+          >
+            📈 View Full Analytics →
+          </button>
         </div>
 
         {/* ── 4 KPI Cards ── */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '14px', marginBottom: '24px', flexWrap: 'wrap' }}>
           <KpiCard
             title="Total Records"
             value={stats?.total}
@@ -150,7 +128,7 @@ export default function DashboardPage() {
           <KpiCard
             title="Compliant"
             value={stats?.compliant}
-            subtitle={stats?.total ? `${Math.round((stats.compliant / stats.total) * 100)}% of total` : '0% of total'}
+            subtitle={`${complianceRate}% of total`}
             color="#16a34a"
             icon="✅"
           />
@@ -171,30 +149,26 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Bar Chart ── */}
-        <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 6px rgba(0,0,0,0.08)', marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', margin: '0 0 20px' }}>
+        <div style={{ background: 'white', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', margin: '0 0 16px' }}>
             Records by Severity
           </h2>
           {chartData.length === 0 || chartData.every(d => d.count === 0) ? (
-            <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ color: '#9ca3af' }}>No data yet — records will appear here once backend is connected</p>
+            <div style={{ height: isMobile ? '150px' : '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p style={{ color: '#9ca3af', textAlign: 'center', fontSize: '14px' }}>
+                No data yet — records will appear here once backend is connected
+              </p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+            <ResponsiveContainer width="100%" height={isMobile ? 180 : 240}>
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="severity" tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
-                  cursor={{ fill: '#f9fafb' }}
-                />
+                <XAxis dataKey="severity" tick={{ fontSize: 11, fill: '#6b7280' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} allowDecimals={false} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }} cursor={{ fill: '#f9fafb' }} />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {chartData.map((entry) => (
-                    <Cell
-                      key={entry.severity}
-                      fill={SEVERITY_COLORS[entry.severity] ?? '#6b7280'}
-                    />
+                  {chartData.map(entry => (
+                    <Cell key={entry.severity} fill={SEVERITY_COLORS[entry.severity] ?? '#6b7280'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -202,9 +176,9 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* ── Status breakdown ── */}
-        <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#111827', margin: '0 0 16px' }}>
+        {/* ── Status Breakdown ── */}
+        <div style={{ background: 'white', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.08)', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#111827', margin: '0 0 16px' }}>
             Status Breakdown
           </h2>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -214,8 +188,8 @@ export default function DashboardPage() {
               { label: 'Pending',       value: stats?.pending,      bg: '#fef9c3', color: '#854d0e' },
               { label: 'Total',         value: stats?.total,        bg: '#eff6ff', color: '#1e40af' },
             ].map(item => (
-              <div key={item.label} style={{ background: item.bg, borderRadius: '10px', padding: '16px 24px', minWidth: '140px', textAlign: 'center' }}>
-                <p style={{ fontSize: '28px', fontWeight: '800', color: item.color, margin: '0 0 4px' }}>
+              <div key={item.label} style={{ background: item.bg, borderRadius: '10px', padding: '16px 20px', minWidth: '120px', textAlign: 'center', flex: 1 }}>
+                <p style={{ fontSize: '26px', fontWeight: '800', color: item.color, margin: '0 0 4px' }}>
                   {item.value ?? 0}
                 </p>
                 <p style={{ fontSize: '12px', fontWeight: '600', color: item.color, margin: 0 }}>
@@ -224,6 +198,62 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Quick Actions ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '20px' }}>
+
+          {/* Go to Records */}
+          <div
+            onClick={() => navigate('/')}
+            style={{ background: 'white', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', transition: 'box-shadow 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 6px rgba(0,0,0,0.08)'}
+          >
+            <div style={{ width: '44px', height: '44px', background: '#eff6ff', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
+              📋
+            </div>
+            <div>
+              <p style={{ fontWeight: '700', color: '#111827', fontSize: '15px', margin: '0 0 3px' }}>View All Records</p>
+              <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>Browse, search and filter patch records</p>
+            </div>
+            <span style={{ marginLeft: 'auto', color: '#1B4F8A', fontSize: '18px' }}>→</span>
+          </div>
+
+          {/* Add New Record */}
+          <div
+            onClick={() => navigate('/patch/new')}
+            style={{ background: 'white', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px' }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 6px rgba(0,0,0,0.08)'}
+          >
+            <div style={{ width: '44px', height: '44px', background: '#f0fdf4', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
+              ➕
+            </div>
+            <div>
+              <p style={{ fontWeight: '700', color: '#111827', fontSize: '15px', margin: '0 0 3px' }}>Add New Record</p>
+              <p style={{ color: '#6b7280', fontSize: '13px', margin: 0 }}>Create a new patch compliance record</p>
+            </div>
+            <span style={{ marginLeft: 'auto', color: '#16a34a', fontSize: '18px' }}>→</span>
+          </div>
+        </div>
+
+        {/* ── Analytics Banner ── */}
+        <div style={{ background: 'linear-gradient(135deg, #1B4F8A 0%, #2563eb 100%)', borderRadius: '12px', padding: isMobile ? '20px' : '24px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <p style={{ color: 'white', fontWeight: '700', fontSize: isMobile ? '16px' : '18px', margin: '0 0 6px' }}>
+              📈 Want deeper insights?
+            </p>
+            <p style={{ color: '#bfdbfe', fontSize: '13px', margin: 0 }}>
+              View compliance trends, score distribution, severity breakdown and more in the Analytics page
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/analytics')}
+            style={{ backgroundColor: 'white', color: '#1B4F8A', padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '14px', whiteSpace: 'nowrap', flexShrink: 0 }}
+          >
+            Open Analytics →
+          </button>
         </div>
 
       </div>

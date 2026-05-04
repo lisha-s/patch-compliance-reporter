@@ -1,0 +1,4 @@
+# Code owners for patch-compliance-reporter
+# Java Developer 2 owns these files
+frontend/                    @sagar9945
+backend/src/main/resources/  @sagar9945

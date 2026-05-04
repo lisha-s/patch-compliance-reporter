@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tool-96 — Patch Compliance Reporter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .slide {
+      display: none;
+      height: 100vh;
+      padding: 48px 80px;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+    .slide.active { display: flex; }
+
+    /* ── Slide 1 — Problem ── */
+    .slide-1 { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+
+    .slide-1 .tag {
+      display: inline-block;
+      background: #1B4F8A;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .slide-1 h1 {
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-1 .subtitle {
+      font-size: 20px;
+      color: #94a3b8;
+      margin-bottom: 48px;
+      max-width: 600px;
+      line-height: 1.5;
+    }
+
+    .problem-cards {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .problem-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px 24px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .problem-card .emoji { font-size: 28px; margin-bottom: 10px; }
+    .problem-card h3 { font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .problem-card p { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+
+    /* ── Slide 2 — Architecture ── */
+    .slide-2 { background: linear-gradient(135deg, #0f172a 0%, #162032 100%); }
+
+    .slide-2 h1 {
+      font-size: 42px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: white;
+    }
+
+    .slide-2 .subtitle {
+      font-size: 16px;
+      color: #94a3b8;
+      margin-bottom: 40px;
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .arch-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 16px 12px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .arch-box:hover {
+      transform: translateY(-4px);
+      border-color: #3b82f6;
+    }
+
+    .arch-box .emoji { font-size: 24px; margin-bottom: 8px; }
+    .arch-box .label { font-size: 11px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .arch-box .tech  { font-size: 13px; color: #f1f5f9; font-weight: 600; }
+    .arch-box .desc  { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+    .flow-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .flow-item {
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #93c5fd;
+      font-weight: 600;
+    }
+
+    .flow-arrow { color: #3b82f6; font-size: 18px; }
+
+    /* ── Slide 3 — Demo Flow ── */
+    .slide-3 { background: linear-gradient(135deg, #0f172a 0%, #0d2137 100%); }
+
+    .slide-3 h1 {
+      font-size: 42px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: white;
+    }
+
+    .slide-3 .subtitle {
+      font-size: 16px;
+      color: #94a3b8;
+      margin-bottom: 36px;
+    }
+
+    .demo-steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .demo-step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px 20px;
+      transition: border-color 0.2s;
+    }
+
+    .demo-step:hover { border-color: #3b82f6; }
+
+    .demo-step .num {
+      width: 32px;
+      height: 32px;
+      background: #1B4F8A;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      flex-shrink: 0;
+      color: white;
+    }
+
+    .demo-step .content h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 4px;
+    }
+
+    .demo-step .content p {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .demo-step .time {
+      margin-left: auto;
+      font-size: 11px;
+      color: #60a5fa;
+      font-weight: 600;
+      white-space: nowrap;
+      padding-left: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── Navigation ── */
+    .nav {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px;
+      padding: 10px 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav button {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .nav button:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .nav .dots { display: flex; gap: 6px; align-items: center; }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dot.active { background: #3b82f6; width: 20px; border-radius: 4px; }
+
+    .nav .counter { font-size: 13px; color: #64748b; min-width: '40px'; text-align: center; }
+
+    /* ── Slide number ── */
+    .slide-num {
+      position: absolute;
+      top: 24px;
+      right: 40px;
+      font-size: 12px;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    /* ── Tool ID badge ── */
+    .tool-badge {
+      position: absolute;
+      top: 24px;
+      left: 40px;
+      font-size: 12px;
+      color: #475569;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SLIDE 1 — THE PROBLEM                              -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="slide slide-1 active">
+  <div class="tool-badge">TOOL-96 · CAPSTONE · 2026</div>
+  <div class="slide-num">01 / 03</div>
+  
+
+  <div class="tag">The Problem</div>
+  <h1>Patch Management<br/>Is Broken</h1>
+  <p class="subtitle">
+    Most organisations don't know which servers are unpatched,
+    which patches are critical, or when they're overdue —
+    until something goes wrong.
+  </p>
+
+  <div class="problem-cards">
+    <div class="problem-card">
+      <div class="emoji">🔍</div>
+      <h3>No Visibility</h3>
+      <p>Teams track patches in spreadsheets. No central view of compliance status across all assets.</p>
+    </div>
+    <div class="problem-card">
+      <div class="emoji">⏰</div>
+      <h3>Missed Deadlines</h3>
+      <p>Critical patches like CVE-2024-1234 go unpatched for weeks. No automated deadline tracking.</p>
+    </div>
+    <div class="problem-card">
+      <div class="emoji">🤖</div>
+      <h3>No AI Guidance</h3>
+      <p>Security teams spend hours manually researching each patch. No intelligent recommendations.</p>
+    </div>
+    <div class="problem-card">
+      <div class="emoji">📊</div>
+      <h3>No Analytics</h3>
+      <p>Management can't see compliance trends or risk exposure. Decisions made without data.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SLIDE 2 — ARCHITECTURE                             -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="slide slide-2">
+  <div class="tool-badge">TOOL-96 · CAPSTONE · 2026</div>
+  <div class="slide-num">02 / 03</div>
+
+  <h1>System Architecture</h1>
+  <p class="subtitle">Industry-standard microservices stack — production-ready from day one</p>
+
+  <div class="arch-grid">
+    <div class="arch-box">
+      <div class="emoji">⚛️</div>
+      <div class="label">Frontend</div>
+      <div class="tech">React 18 + Vite</div>
+      <div class="desc">Tailwind CSS · Axios · Recharts</div>
+    </div>
+    <div class="arch-box">
+      <div class="emoji">☕</div>
+      <div class="label">Backend</div>
+      <div class="tech">Spring Boot 3.x</div>
+      <div class="desc">REST API · JWT · Swagger</div>
+    </div>
+    <div class="arch-box">
+      <div class="emoji">🐘</div>
+      <div class="label">Database</div>
+      <div class="tech">PostgreSQL 15</div>
+      <div class="desc">Flyway migrations · Indexes</div>
+    </div>
+    <div class="arch-box">
+      <div class="emoji">⚡</div>
+      <div class="label">Cache</div>
+      <div class="tech">Redis 7</div>
+      <div class="desc">10-min TTL · @Cacheable</div>
+    </div>
+    <div class="arch-box">
+      <div class="emoji">🤖</div>
+      <div class="label">AI Service</div>
+      <div class="tech">Flask + Groq</div>
+      <div class="desc">LLaMA-3 · Python 3.11</div>
+    </div>
+  </div>
+
+  <div class="flow-line">
+    <div class="flow-item">🌐 React Frontend</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">🔐 JWT Auth</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">☕ Spring Boot API</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-item">🐘 PostgreSQL</div>
+    <div class="flow-arrow">+</div>
+    <div class="flow-item">⚡ Redis Cache</div>
+    <div class="flow-arrow">+</div>
+    <div class="flow-item">🤖 Groq AI</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SLIDE 3 — DEMO FLOW                                -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="slide slide-3">
+  <div class="tool-badge">TOOL-96 · CAPSTONE · 2026</div>
+  <div class="slide-num">03 / 03</div>
+
+  <h1>Demo Flow</h1>
+  <p class="subtitle">6-minute live demonstration — Java Developer 2 section</p>
+
+  <div class="demo-steps">
+    <div class="demo-step">
+      <div class="num">1</div>
+      <div class="content">
+        <h3>Login</h3>
+        <p>JWT authentication — sign in and redirect to records list</p>
+      </div>
+      <div class="time">0:00–0:15</div>
+    </div>
+    <div class="demo-step">
+      <div class="num">2</div>
+      <div class="content">
+        <h3>Records List</h3>
+        <p>15 demo records with severity badges and compliance scores</p>
+      </div>
+      <div class="time">0:15–0:30</div>
+    </div>
+    <div class="demo-step">
+      <div class="num">3</div>
+      <div class="content">
+        <h3>Search & Filter</h3>
+        <p>Debounced search + status dropdown + date range filter</p>
+      </div>
+      <div class="time">0:30–0:45</div>
+    </div>
+    <div class="demo-step">
+      <div class="num">4</div>
+      <div class="content">
+        <h3>Dashboard</h3>
+        <p>4 KPI cards + severity bar chart + status breakdown</p>
+      </div>
+      <div class="time">0:45–1:00</div>
+    </div>
+    <div class="demo-step">
+      <div class="num">5</div>
+      <div class="content">
+        <h3>Analytics</h3>
+        <p>4 Recharts charts + period selector (1M/3M/6M/1Y)</p>
+      </div>
+      <div class="time">1:00–1:15</div>
+    </div>
+    <div class="demo-step">
+      <div class="num">6</div>
+      <div class="content">
+        <h3>Create + Detail + AI</h3>
+        <p>Form validation + score badge + AI Describe/Recommend</p>
+      </div>
+      <div class="time">1:15–1:30</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- Navigation                                          -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="nav">
+  <button id="prev" onclick="changeSlide(-1)" disabled>←</button>
+  <div class="dots">
+    <div class="dot active" onclick="goTo(0)"></div>
+    <div class="dot" onclick="goTo(1)"></div>
+    <div class="dot" onclick="goTo(2)"></div>
+  </div>
+  <button id="next" onclick="changeSlide(1)">→</button>
+</div>
+
+<script>
+  let current = 0
+  const slides = document.querySelectorAll('.slide')
+  const dots   = document.querySelectorAll('.dot')
+
+  function goTo(n) {
+    slides[current].classList.remove('active')
+    dots[current].classList.remove('active')
+    current = n
+    slides[current].classList.add('active')
+    dots[current].classList.add('active')
+    document.getElementById('prev').disabled = current === 0
+    document.getElementById('next').disabled = current === slides.length - 1
+  }
+
+  function changeSlide(dir) {
+    const next = current + dir
+    if (next >= 0 && next < slides.length) goTo(next)
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'Space') changeSlide(1)
+    if (e.key === 'ArrowLeft')  changeSlide(-1)
+  })
+</script>
+</body>
+</html>
