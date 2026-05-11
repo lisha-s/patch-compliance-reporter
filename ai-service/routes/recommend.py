@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from services.prompt_loader import load_prompt
+from services.groq_client import generate_ai_response
 
 recommend_bp = Blueprint("recommend", __name__)
 
@@ -31,27 +32,24 @@ def recommend():
             f"Software: {software}\nPatch Status: {patch_status}"
         )
 
-        recommendations = [
-            {
-                "action_type": "UPDATE",
-                "description": f"Update {software} to the latest security patch.",
-                "priority": "HIGH"
-            },
-            {
-                "action_type": "SCAN",
-                "description": "Run a vulnerability assessment scan.",
-                "priority": "MEDIUM"
-            },
-            {
-                "action_type": "BACKUP",
-                "description": "Create a backup before patch deployment.",
-                "priority": "LOW"
-            }
-        ]
+        ai_response = generate_ai_response(final_prompt)
+
+        if not ai_response:
+
+            return jsonify({
+                "recommendations": [
+                    {
+                        "action_type": "UPDATE",
+                        "description": "Update software patches immediately.",
+                        "priority": "HIGH"
+                    }
+                ],
+                "is_fallback": True
+            }), 200
 
         return jsonify({
-            "recommendations": recommendations,
-            "prompt_used": final_prompt
+            "recommendations": ai_response,
+            "is_fallback": False
         }), 200
 
     except Exception as error:
