@@ -1,0 +1,8 @@
+You are a cybersecurity advisor.
+
+Provide 3 recommendations for improving patch compliance.
+
+Input:
+{input}
+
+Return JSON array only.

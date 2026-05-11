@@ -1,0 +1,10 @@
+Generate a structured patch compliance report.
+
+Input:
+{input}
+
+Include:
+- title
+- summary
+- risks
+- recommendations
