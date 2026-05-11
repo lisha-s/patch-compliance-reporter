@@ -1,0 +1,22 @@
+[
+  {
+    "software": "Ubuntu Server",
+    "patch_status": "missing"
+  },
+  {
+    "software": "Windows Server 2022",
+    "patch_status": "outdated"
+  },
+  {
+    "software": "Docker Engine",
+    "patch_status": "expired"
+  },
+  {
+    "software": "Apache Tomcat",
+    "patch_status": "vulnerable"
+  },
+  {
+    "software": "Kubernetes",
+    "patch_status": "missing"
+  }
+]

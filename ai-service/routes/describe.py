@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime
+
 from services.prompt_loader import load_prompt
 from services.groq_client import generate_ai_response
-from datetime import datetime
+from services.response_formatter import format_fallback_description
 
 describe_bp = Blueprint("describe", __name__)
 
@@ -37,11 +39,14 @@ def describe():
 
         if not ai_response:
 
-            return jsonify({
-                "description": f"{software} has {patch_status} patches.",
-                "is_fallback": True,
-                "generated_at": datetime.utcnow().isoformat()
-            }), 200
+            fallback = format_fallback_description(
+                software,
+                patch_status
+            )
+
+            fallback["generated_at"] = datetime.utcnow().isoformat()
+
+            return jsonify(fallback), 200
 
         return jsonify({
             "description": ai_response,
