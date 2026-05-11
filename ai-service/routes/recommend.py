@@ -1,3 +1,5 @@
+import json
+
 from flask import Blueprint, request, jsonify
 from services.prompt_loader import load_prompt
 from services.groq_client import generate_ai_response
@@ -40,15 +42,17 @@ def recommend():
                 "recommendations": [
                     {
                         "action_type": "UPDATE",
-                        "description": "Update software patches immediately.",
+                        "description": "Update patches immediately.",
                         "priority": "HIGH"
                     }
                 ],
                 "is_fallback": True
             }), 200
 
+        parsed_response = json.loads(ai_response)
+
         return jsonify({
-            "recommendations": ai_response,
+            "recommendations": parsed_response,
             "is_fallback": False
         }), 200
 

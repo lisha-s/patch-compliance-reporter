@@ -3,8 +3,16 @@ Generate a structured patch compliance report.
 Input:
 {input}
 
-Include:
-- title
-- summary
-- risks
-- recommendations
+Return ONLY valid JSON:
+
+{
+  "title": "",
+  "summary": "",
+  "risks": [],
+  "recommendations": []
+}
+
+Rules:
+- No markdown
+- No explanations
+- Valid JSON only

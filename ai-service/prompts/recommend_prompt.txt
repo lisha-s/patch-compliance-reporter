@@ -1,8 +1,21 @@
 You are a cybersecurity advisor.
 
-Provide 3 recommendations for improving patch compliance.
+Analyze the patch compliance issue and return exactly 3 recommendations.
 
 Input:
 {input}
 
-Return JSON array only.
+Return ONLY valid JSON in this exact format:
+
+[
+  {
+    "action_type": "UPDATE",
+    "description": "example",
+    "priority": "HIGH"
+  }
+]
+
+Rules:
+- No markdown
+- No explanation
+- Valid JSON only
