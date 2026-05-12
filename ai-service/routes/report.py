@@ -9,7 +9,9 @@ from services.groq_client import generate_ai_response
 from services.response_formatter import (
     format_fallback_report
 )
-
+from flask_jwt_extended import (
+    jwt_required
+)
 from services.security import (
     validate_content_type
 )
@@ -23,6 +25,11 @@ report_bp = Blueprint("report", __name__)
 
 @swag_from({
     "tags": ["Report"],
+    "security": [
+        {
+            "Bearer": []
+        }
+    ],
     "consumes": [
         "application/json"
     ],
@@ -52,10 +59,13 @@ report_bp = Blueprint("report", __name__)
         }
     }
 })
+
+
 @report_bp.route(
     "/generate-report",
     methods=["POST"]
 )
+@jwt_required()
 def generate_report():
 
     try:

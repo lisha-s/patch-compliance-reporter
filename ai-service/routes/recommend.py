@@ -8,11 +8,19 @@ from services.groq_client import generate_ai_response
 from services.response_formatter import (
     format_fallback_recommendations
 )
+from flask_jwt_extended import (
+    jwt_required
+)
 
 recommend_bp = Blueprint("recommend", __name__)
 
 @swag_from({
     "tags": ["Recommend"],
+    "security": [
+        {
+            "Bearer": []
+        }
+    ],
     "consumes": [
         "application/json"
     ],
@@ -42,7 +50,10 @@ recommend_bp = Blueprint("recommend", __name__)
         }
     }
 })
+
+
 @recommend_bp.route("/recommend", methods=["POST"])
+@jwt_required()
 def recommend():
 
     try:

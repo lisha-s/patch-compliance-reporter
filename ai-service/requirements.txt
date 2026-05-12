@@ -6,3 +6,5 @@ redis==5.0.7
 flask-limiter==3.8.0
 gunicorn==22.0.0
 pytest==8.3.2
+flasgger==0.9.7.1
+flask-jwt-extended==4.6.0

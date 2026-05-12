@@ -10,6 +10,10 @@ from services.response_formatter import (
     format_fallback_description
 )
 
+from flask_jwt_extended import (
+    jwt_required
+)
+
 from services.cache_service import (
     get_cached_response,
     set_cached_response
@@ -32,6 +36,17 @@ describe_bp = Blueprint("describe", __name__)
 
 @swag_from({
     "tags": ["Describe"],
+
+    "security": [
+        {
+            "Bearer": []
+        }
+    ],
+
+    "consumes": [
+        "application/json"
+    ],
+
     "parameters": [
         {
             "name": "body",
@@ -41,22 +56,29 @@ describe_bp = Blueprint("describe", __name__)
                 "type": "object",
                 "properties": {
                     "software": {
-                        "type": "string"
+                        "type": "string",
+                        "example": "Ubuntu Server"
                     },
                     "patch_status": {
-                        "type": "string"
+                        "type": "string",
+                        "example": "missing"
                     }
                 }
             }
         }
     ],
+
     "responses": {
         200: {
             "description": "AI generated description"
         }
     }
 })
-@describe_bp.route("/describe", methods=["POST"])
+@describe_bp.route(
+    "/describe",
+    methods=["POST"]
+)
+@jwt_required()
 def describe():
 
     try:
