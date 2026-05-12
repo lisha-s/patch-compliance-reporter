@@ -1,6 +1,7 @@
 import json
 
 from flask import Blueprint, request, jsonify
+from flasgger import swag_from
 
 from services.prompt_loader import load_prompt
 from services.groq_client import generate_ai_response
@@ -10,7 +11,37 @@ from services.response_formatter import (
 
 recommend_bp = Blueprint("recommend", __name__)
 
-
+@swag_from({
+    "tags": ["Recommend"],
+    "consumes": [
+        "application/json"
+    ],
+    "parameters": [
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "software": {
+                        "type": "string",
+                        "example": "Windows Server 2022"
+                    },
+                    "patch_status": {
+                        "type": "string",
+                        "example": "outdated"
+                    }
+                }
+            }
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "AI generated recommendations"
+        }
+    }
+})
 @recommend_bp.route("/recommend", methods=["POST"])
 def recommend():
 

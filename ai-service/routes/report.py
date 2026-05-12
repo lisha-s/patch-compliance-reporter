@@ -1,44 +1,102 @@
 import json
 
 from flask import Blueprint, request, jsonify
+from flasgger import swag_from
 
 from services.prompt_loader import load_prompt
 from services.groq_client import generate_ai_response
+
 from services.response_formatter import (
     format_fallback_report
+)
+
+from services.security import (
+    validate_content_type
+)
+
+from services.error_handler import (
+    api_error
 )
 
 report_bp = Blueprint("report", __name__)
 
 
-@report_bp.route("/generate-report", methods=["POST"])
+@swag_from({
+    "tags": ["Report"],
+    "consumes": [
+        "application/json"
+    ],
+    "parameters": [
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "software": {
+                        "type": "string",
+                        "example": "Apache Tomcat"
+                    },
+                    "patch_status": {
+                        "type": "string",
+                        "example": "vulnerable"
+                    }
+                }
+            }
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "AI generated compliance report"
+        }
+    }
+})
+@report_bp.route(
+    "/generate-report",
+    methods=["POST"]
+)
 def generate_report():
 
     try:
 
+        # Validate content type
+        content_type_error = (
+            validate_content_type()
+        )
+
+        if content_type_error:
+            return content_type_error
+
+        # Get request body
         data = request.get_json()
 
-        # Validate request body
         if not data:
-            return jsonify({
-                "error": "Request body is required"
-            }), 400
+            return api_error(
+                "Request body is required",
+                400
+            )
 
+        # Extract fields
         software = data.get("software")
-        patch_status = data.get("patch_status")
+        patch_status = data.get(
+            "patch_status"
+        )
 
         # Validate required fields
         if not software or not patch_status:
-            return jsonify({
-                "error": "software and patch_status are required"
-            }), 400
 
-        # Load report prompt
+            return api_error(
+                "software and patch_status are required",
+                400
+            )
+
+        # Load prompt
         prompt_template = load_prompt(
             "report_prompt.txt"
         )
 
-        # Create final prompt
+        # Build final prompt
         final_prompt = prompt_template.replace(
             "{input}",
             f"Software: {software}\n"
@@ -53,9 +111,15 @@ def generate_report():
         # Fallback handling
         if not ai_response:
 
-            fallback = format_fallback_report()
+            fallback = (
+                format_fallback_report()
+            )
 
-            return jsonify(fallback), 200
+            fallback["is_fallback"] = True
+
+            return jsonify(
+                fallback
+            ), 200
 
         # Parse JSON response
         try:
@@ -66,19 +130,30 @@ def generate_report():
 
         except json.JSONDecodeError:
 
-            fallback = format_fallback_report()
+            fallback = (
+                format_fallback_report()
+            )
 
-            fallback["json_parse_error"] = True
+            fallback[
+                "json_parse_error"
+            ] = True
 
-            return jsonify(fallback), 200
+            return jsonify(
+                fallback
+            ), 200
 
-        # Add metadata
-        parsed_response["is_fallback"] = False
+        # Final response
+        parsed_response[
+            "is_fallback"
+        ] = False
 
-        return jsonify(parsed_response), 200
+        return jsonify(
+            parsed_response
+        ), 200
 
     except Exception as error:
 
-        return jsonify({
-            "error": str(error)
-        }), 500
+        return api_error(
+            str(error),
+            500
+        )

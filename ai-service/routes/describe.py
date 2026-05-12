@@ -3,6 +3,8 @@ from datetime import datetime
 
 from services.prompt_loader import load_prompt
 from services.groq_client import generate_ai_response
+from flasgger import swag_from
+from services.error_handler import api_error
 
 from services.response_formatter import (
     format_fallback_description
@@ -28,7 +30,32 @@ from services.metrics import (
 
 describe_bp = Blueprint("describe", __name__)
 
-
+@swag_from({
+    "tags": ["Describe"],
+    "parameters": [
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "software": {
+                        "type": "string"
+                    },
+                    "patch_status": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "AI generated description"
+        }
+    }
+})
 @describe_bp.route("/describe", methods=["POST"])
 def describe():
 
@@ -46,9 +73,10 @@ def describe():
         data = request.get_json()
 
         if not data:
-            return jsonify({
-                "error": "Request body is required"
-            }), 400
+            return api_error(
+                str(error),
+                500
+            )
 
         # Extract fields
         software = data.get("software")
