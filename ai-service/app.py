@@ -5,6 +5,9 @@ from flask import Flask, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 from flasgger import Swagger
+from routes.analytics import (
+    analytics_bp
+)
 
 from flask_jwt_extended import (
     JWTManager
@@ -109,6 +112,10 @@ app.register_blueprint(
     url_prefix="/api/v1"
 )
 
+app.register_blueprint(
+    analytics_bp,
+    url_prefix="/api/v1"
+)
 
 @app.before_request
 def before_request():

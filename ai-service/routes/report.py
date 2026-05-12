@@ -2,6 +2,9 @@ import json
 
 from flask import Blueprint, request, jsonify
 from flasgger import swag_from
+from services.pdf_service import (
+    generate_pdf_report
+)
 
 from services.prompt_loader import load_prompt
 from services.groq_client import generate_ai_response
@@ -156,6 +159,18 @@ def generate_report():
         parsed_response[
             "is_fallback"
         ] = False
+
+        pdf_path = generate_pdf_report(
+             software,
+             patch_status,
+             parsed_response.get(
+                  "summary",
+                  "No summary available"
+            )
+        )
+        parsed_response[
+            "pdf_report"
+        ] = pdf_path
 
         return jsonify(
             parsed_response
