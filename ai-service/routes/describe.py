@@ -16,6 +16,15 @@ from services.cache_service import (
 from services.security import (
     validate_content_type
 )
+from services.logger_service import (
+    log_info,
+    log_error
+)
+
+from services.metrics import (
+    increment_requests,
+    increment_errors
+)
 
 describe_bp = Blueprint("describe", __name__)
 
@@ -30,6 +39,8 @@ def describe():
 
         if content_type_error:
             return content_type_error
+        
+        increment_requests()
 
         # Get request body
         data = request.get_json()
@@ -42,6 +53,12 @@ def describe():
         # Extract fields
         software = data.get("software")
         patch_status = data.get("patch_status")
+
+        log_info(
+            f"/describe called | "
+            f"software={software} | "
+            f"patch_status={patch_status}"
+        )
 
         # Validate required fields
         if not software or not patch_status:
@@ -98,6 +115,10 @@ def describe():
             return jsonify(fallback), 200
 
         # Final response
+        log_info(
+            f"AI description generated "
+            f"for {software}"
+        )
         response_data = {
             "description": ai_response,
             "is_fallback": False,
@@ -115,6 +136,10 @@ def describe():
         return jsonify(response_data), 200
 
     except Exception as error:
+
+        increment_errors()
+
+        log_error(str(error))
 
         return jsonify({
             "error": str(error)

@@ -2,6 +2,7 @@ import os
 import time
 import requests
 from dotenv import load_dotenv
+from config import Config
 
 load_dotenv()
 
@@ -18,15 +19,15 @@ def generate_ai_response(prompt, retries=3):
     }
 
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": Config.GROQ_MODEL,
         "messages": [
             {
                 "role": "user",
                 "content": prompt
             }
         ],
-        "temperature": 0.3,
-        "max_tokens": 300
+        "temperature": Config.TEMPERATURE,
+        "max_tokens": Config.MAX_TOKENS
     }
 
     for attempt in range(retries):

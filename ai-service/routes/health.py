@@ -3,6 +3,8 @@ import datetime
 
 from flask import Blueprint
 
+from services.metrics import get_metrics
+
 health_bp = Blueprint("health", __name__)
 
 
@@ -14,5 +16,6 @@ def health():
         "service": "ai-service",
         "timestamp": datetime.datetime.utcnow().isoformat(),
         "python_version": platform.python_version(),
-        "platform": platform.system()
+        "platform": platform.system(),
+        "metrics": get_metrics()
     }, 200
