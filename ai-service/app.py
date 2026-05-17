@@ -45,6 +45,17 @@ from routes.backup import (
 from middleware.request_tracker import (
     assign_request_id
 )
+from routes.audit_logs import (
+    audit_logs_bp
+)
+
+from routes.system_status import (
+    system_status_bp
+)
+
+from routes.usage_summary import (
+    usage_summary_bp
+)
 
 load_dotenv()
 
@@ -232,7 +243,20 @@ app.register_blueprint(
     backup_bp,
     url_prefix="/api/v1"
 )
+app.register_blueprint(
+    audit_logs_bp,
+    url_prefix="/api/v1"
+)
 
+app.register_blueprint(
+    system_status_bp,
+    url_prefix="/api/v1"
+)
+
+app.register_blueprint(
+    usage_summary_bp,
+    url_prefix="/api/v1"
+)
 
 @app.before_request
 def before_request():
