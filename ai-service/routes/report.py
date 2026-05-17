@@ -5,7 +5,7 @@ from flasgger import swag_from
 from services.pdf_service import (
     generate_pdf_report
 )
-
+from middleware.limiter import limiter
 from services.prompt_loader import load_prompt
 from services.groq_client import generate_ai_response
 
@@ -27,7 +27,7 @@ report_bp = Blueprint("report", __name__)
 
 
 @swag_from({
-    "tags": ["Report"],
+    "tags": ["5. Report"],
     "security": [
         {
             "Bearer": []
@@ -69,6 +69,7 @@ report_bp = Blueprint("report", __name__)
     methods=["POST"]
 )
 @jwt_required()
+@limiter.limit("3 per minute")
 def generate_report():
 
     try:

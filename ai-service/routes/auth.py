@@ -10,7 +10,7 @@ auth_bp = Blueprint("auth", __name__)
 
 
 @swag_from({
-    "tags": ["Authentication"],
+    "tags": ["1. Authentication"],
     "parameters": [
         {
             "name": "body",

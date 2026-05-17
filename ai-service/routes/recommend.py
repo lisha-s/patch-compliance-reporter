@@ -2,7 +2,7 @@ import json
 
 from flask import Blueprint, request, jsonify
 from flasgger import swag_from
-
+from middleware.limiter import limiter
 from services.prompt_loader import load_prompt
 from services.groq_client import generate_ai_response
 from services.response_formatter import (
@@ -15,7 +15,7 @@ from flask_jwt_extended import (
 recommend_bp = Blueprint("recommend", __name__)
 
 @swag_from({
-    "tags": ["Recommend"],
+    "tags": ["4. Recommend"],
     "security": [
         {
             "Bearer": []
@@ -54,6 +54,7 @@ recommend_bp = Blueprint("recommend", __name__)
 
 @recommend_bp.route("/recommend", methods=["POST"])
 @jwt_required()
+@limiter.limit("5 per minute")
 def recommend():
 
     try:

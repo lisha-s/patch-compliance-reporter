@@ -31,11 +31,11 @@ from services.metrics import (
     increment_requests,
     increment_errors
 )
-
+from middleware.limiter import limiter
 describe_bp = Blueprint("describe", __name__)
 
 @swag_from({
-    "tags": ["Describe"],
+    "tags": ["3. Describe"],
 
     "security": [
         {
@@ -79,6 +79,7 @@ describe_bp = Blueprint("describe", __name__)
     methods=["POST"]
 )
 @jwt_required()
+@limiter.limit("5 per minute")
 def describe():
 
     try:

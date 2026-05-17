@@ -10,7 +10,7 @@ health_bp = Blueprint("health", __name__)
 
 
 @swag_from({
-    "tags": ["Health"],
+    "tags": ["2. Health"],
     "responses": {
         200: {
             "description": "Health check endpoint"

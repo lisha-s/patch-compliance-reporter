@@ -5,6 +5,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 from flasgger import Swagger
+from routes.metrics import metrics_bp
 from routes.analytics import (
     analytics_bp
 )
@@ -12,7 +13,7 @@ from routes.analytics import (
 from flask_jwt_extended import (
     JWTManager
 )
-
+from middleware.limiter import limiter
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -21,10 +22,16 @@ from routes.recommend import recommend_bp
 from routes.report import report_bp
 from routes.health import health_bp
 from routes.auth import auth_bp
+from flask import request
+
+from middleware.request_logger import (
+    request_logger
+)
 
 load_dotenv()
 
 app = Flask(__name__)
+limiter.init_app(app)
 
 CORS(app)
 
@@ -38,27 +45,57 @@ swagger_config = {
             "model_filter": lambda tag: True,
         }
     ],
+
     "static_url_path": "/flasgger_static",
+
     "swagger_ui": True,
-    "specs_route": "/apidocs/"
+
+    "specs_route": "/apidocs/",
+
+    "swagger_ui_config": {
+        "operationsSorter": "alpha",
+        "tagsSorter": "alpha"
+    }
 }
 
 swagger_template = {
     "swagger": "2.0",
+
     "info": {
         "title": "Patch Compliance AI API",
         "description": "AI powered patch compliance APIs",
         "version": "1.0"
     },
+
+    "tags": [
+        {
+            "name": "1. Authentication"
+        },
+        {
+            "name": "2. Health"
+        },
+        {
+            "name": "3. Describe"
+        },
+        {
+            "name": "4. Recommend"
+        },
+        {
+            "name": "5. Report"
+        },
+        {
+            "name": "6. Analytics"
+        }
+    ],
+
     "securityDefinitions": {
         "Bearer": {
             "type": "apiKey",
             "name": "Authorization",
             "in": "header",
             "description": (
-                "JWT Authorization header "
-                "using Bearer scheme. "
-                "Example: "
+                "JWT Authorization header using "
+                "Bearer scheme. Example: "
                 "'Bearer {token}'"
             )
         }
@@ -87,10 +124,21 @@ limiter = Limiter(
 )
 
 # Register Blueprints
+# Authentication First
+
 app.register_blueprint(
     auth_bp,
     url_prefix="/api/v1"
 )
+
+# Health Second
+
+app.register_blueprint(
+    health_bp,
+    url_prefix="/api/v1"
+)
+
+# Protected AI APIs
 
 app.register_blueprint(
     describe_bp,
@@ -107,13 +155,14 @@ app.register_blueprint(
     url_prefix="/api/v1"
 )
 
-app.register_blueprint(
-    health_bp,
-    url_prefix="/api/v1"
-)
+# Analytics Last
 
 app.register_blueprint(
     analytics_bp,
+    url_prefix="/api/v1"
+)
+app.register_blueprint(
+    metrics_bp,
     url_prefix="/api/v1"
 )
 
@@ -152,7 +201,20 @@ def home():
         )
     }
 
+from flask import request
 
+from middleware.request_logger import (
+    request_logger
+)
+
+
+@app.before_request
+def log_request():
+
+    request_logger.info(
+        f"{request.method} "
+        f"{request.path}"
+    )
 if __name__ == "__main__":
 
     port = int(
