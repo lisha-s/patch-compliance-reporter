@@ -10,7 +10,7 @@ metrics_bp = Blueprint(
 
 
 @swag_from({
-    "tags": ["7. Metrics"],
+    "tags": ["Metrics"],
 
     "responses": {
         200: {

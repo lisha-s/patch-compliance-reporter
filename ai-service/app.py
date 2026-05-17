@@ -16,7 +16,7 @@ from flask_jwt_extended import (
 from middleware.limiter import limiter
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
+from routes.history import history_bp
 from routes.describe import describe_bp
 from routes.recommend import recommend_bp
 from routes.report import report_bp
@@ -163,6 +163,10 @@ app.register_blueprint(
 )
 app.register_blueprint(
     metrics_bp,
+    url_prefix="/api/v1"
+)
+app.register_blueprint(
+    history_bp,
     url_prefix="/api/v1"
 )
 

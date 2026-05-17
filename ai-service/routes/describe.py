@@ -6,6 +6,8 @@ from services.groq_client import generate_ai_response
 from flasgger import swag_from
 from services.error_handler import api_error
 
+from database.db import get_connection
+
 from services.response_formatter import (
     format_fallback_description
 )
@@ -22,6 +24,7 @@ from services.cache_service import (
 from services.security import (
     validate_content_type
 )
+
 from services.logger_service import (
     log_info,
     log_error
@@ -31,8 +34,15 @@ from services.metrics import (
     increment_requests,
     increment_errors
 )
+
 from middleware.limiter import limiter
-describe_bp = Blueprint("describe", __name__)
+
+
+describe_bp = Blueprint(
+    "describe",
+    __name__
+)
+
 
 @swag_from({
     "tags": ["3. Describe"],
@@ -52,13 +62,16 @@ describe_bp = Blueprint("describe", __name__)
             "name": "body",
             "in": "body",
             "required": True,
+
             "schema": {
                 "type": "object",
+
                 "properties": {
                     "software": {
                         "type": "string",
                         "example": "Ubuntu Server"
                     },
+
                     "patch_status": {
                         "type": "string",
                         "example": "missing"
@@ -70,7 +83,9 @@ describe_bp = Blueprint("describe", __name__)
 
     "responses": {
         200: {
-            "description": "AI generated description"
+            "description": (
+                "AI generated description"
+            )
         }
     }
 })
@@ -85,25 +100,36 @@ def describe():
     try:
 
         # Validate Content-Type
-        content_type_error = validate_content_type()
+
+        content_type_error = (
+            validate_content_type()
+        )
 
         if content_type_error:
             return content_type_error
-        
+
         increment_requests()
 
-        # Get request body
+        # Get request data
+
         data = request.get_json()
 
         if not data:
+
             return api_error(
-                str(error),
-                500
+                "Invalid request body",
+                400
             )
 
         # Extract fields
-        software = data.get("software")
-        patch_status = data.get("patch_status")
+
+        software = data.get(
+            "software"
+        )
+
+        patch_status = data.get(
+            "patch_status"
+        )
 
         log_info(
             f"/describe called | "
@@ -111,50 +137,78 @@ def describe():
             f"patch_status={patch_status}"
         )
 
-        # Validate required fields
+        # Validate fields
+
         if not software or not patch_status:
+
             return jsonify({
-                "error": "software and patch_status are required"
+                "error": (
+                    "software and "
+                    "patch_status "
+                    "are required"
+                )
             }), 400
 
-        # Create cache key
-        cache_key = f"{software}:{patch_status}"
+        # Cache key
 
-        # Check Redis cache
-        cached_response = get_cached_response(
-            cache_key
+        cache_key = (
+            f"{software}:{patch_status}"
         )
 
-        # Return cached response
+        # Check cache
+
+        cached_response = (
+            get_cached_response(
+                cache_key
+            )
+        )
+
         if cached_response:
 
-            cached_response["cache"] = "HIT"
+            cached_response["cache"] = (
+                "HIT"
+            )
 
-            return jsonify(cached_response), 200
+            return jsonify(
+                cached_response
+            ), 200
 
         # Load AI prompt
-        prompt_template = load_prompt(
-            "describe_prompt.txt"
+
+        prompt_template = (
+            load_prompt(
+                "describe_prompt.txt"
+            )
         )
 
-        # Build final prompt
-        final_prompt = prompt_template.replace(
-            "{input}",
-            f"Software: {software}\n"
-            f"Patch Status: {patch_status}"
+        # Build prompt
+
+        final_prompt = (
+            prompt_template.replace(
+                "{input}",
+                f"Software: {software}\n"
+                f"Patch Status: "
+                f"{patch_status}"
+            )
         )
 
         # Generate AI response
-        ai_response = generate_ai_response(
-            final_prompt
+
+        ai_response = (
+            generate_ai_response(
+                final_prompt
+            )
         )
 
-        # Fallback handling
+        # Fallback response
+
         if not ai_response:
 
-            fallback = format_fallback_description(
-                software,
-                patch_status
+            fallback = (
+                format_fallback_description(
+                    software,
+                    patch_status
+                )
             )
 
             fallback["generated_at"] = (
@@ -163,20 +217,22 @@ def describe():
 
             fallback["cache"] = "MISS"
 
-            return jsonify(fallback), 200
+            return jsonify(
+                fallback
+            ), 200
 
         # Final response
-        log_info(
-            f"AI description generated "
-            f"for {software}"
-        )
+
         response_data = {
             "description": ai_response,
             "is_fallback": False,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": (
+                datetime.utcnow().isoformat()
+            )
         }
 
         # Store in Redis cache
+
         set_cached_response(
             cache_key,
             response_data
@@ -184,13 +240,51 @@ def describe():
 
         response_data["cache"] = "MISS"
 
-        return jsonify(response_data), 200
+        # Save to SQLite database
+
+        connection = get_connection()
+
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO ai_requests
+            (
+                api_name,
+                software,
+                patch_status,
+                response
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                "describe",
+                software,
+                patch_status,
+                ai_response
+            )
+        )
+
+        connection.commit()
+
+        connection.close()
+
+        log_info(
+            f"AI description generated "
+            f"for {software}"
+        )
+
+        return jsonify(
+            response_data
+        ), 200
 
     except Exception as error:
 
         increment_errors()
 
-        log_error(str(error))
+        log_error(
+            str(error)
+        )
 
         return jsonify({
             "error": str(error)
