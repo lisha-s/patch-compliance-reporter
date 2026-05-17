@@ -1,0 +1,5 @@
+ID,API Name,Software,Patch Status,Response,Created At
+2,recommend,Windows Server 2022,outdated,"[{""action_type"": ""UPDATE"", ""description"": ""Apply the latest Windows Server 2022 security patches"", ""priority"": ""HIGH""}, {""action_type"": ""CONFIGURE"", ""description"": ""Enable automatic updates for Windows Server 2022"", ""priority"": ""MEDIUM""}, {""action_type"": ""MONITOR"", ""description"": ""Schedule regular patch compliance checks for Windows Server 2022"", ""priority"": ""LOW""}]",2026-05-17 13:17:52
+1,describe,Ubuntu Server,missing,"**Security Alert: Ubuntu Server Patch Compliance**
+
+The Ubuntu Server is currently non-compliant due to missing patches, posing a significant security risk. Immediate attention is required to apply the necessary updates and ensure the system's security posture.",2026-05-17 13:17:44

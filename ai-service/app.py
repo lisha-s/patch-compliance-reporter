@@ -29,13 +29,18 @@ from routes.dashboard import dashboard_bp
 from routes.report_history import (
     report_history_bp
 )
-
+from routes.export_history import (
+    export_history_bp
+)
 from routes.search_history import (
     search_history_bp
 )
 
 from middleware.request_logger import (
     request_logger
+)
+from routes.backup import (
+    backup_bp
 )
 
 load_dotenv()
@@ -192,6 +197,15 @@ app.register_blueprint(
 
 app.register_blueprint(
     search_history_bp,
+    url_prefix="/api/v1"
+)
+app.register_blueprint(
+    export_history_bp,
+    url_prefix="/api/v1"
+)
+
+app.register_blueprint(
+    backup_bp,
     url_prefix="/api/v1"
 )
 @app.before_request
