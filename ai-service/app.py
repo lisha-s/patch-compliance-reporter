@@ -24,6 +24,16 @@ from routes.health import health_bp
 from routes.auth import auth_bp
 from flask import request
 
+from routes.dashboard import dashboard_bp
+
+from routes.report_history import (
+    report_history_bp
+)
+
+from routes.search_history import (
+    search_history_bp
+)
+
 from middleware.request_logger import (
     request_logger
 )
@@ -165,11 +175,25 @@ app.register_blueprint(
     metrics_bp,
     url_prefix="/api/v1"
 )
+
 app.register_blueprint(
     history_bp,
     url_prefix="/api/v1"
 )
+app.register_blueprint(
+    dashboard_bp,
+    url_prefix="/api/v1"
+)
 
+app.register_blueprint(
+    report_history_bp,
+    url_prefix="/api/v1"
+)
+
+app.register_blueprint(
+    search_history_bp,
+    url_prefix="/api/v1"
+)
 @app.before_request
 def before_request():
 
