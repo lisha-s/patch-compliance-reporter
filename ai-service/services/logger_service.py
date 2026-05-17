@@ -1,6 +1,6 @@
 import logging
 import os
-
+from flask import g
 LOG_DIR = "logs"
 
 if not os.path.exists(LOG_DIR):
@@ -15,10 +15,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def log_info(message):
-
-    logger.info(message)
-
+logger.info(
+    f"[Request ID: {g.request_id}] "
+    f"{message}"
+)
 
 def log_error(message):
 

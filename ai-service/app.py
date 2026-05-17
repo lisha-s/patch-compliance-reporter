@@ -42,10 +42,34 @@ from middleware.request_logger import (
 from routes.backup import (
     backup_bp
 )
+from middleware.request_tracker import (
+    assign_request_id
+)
 
 load_dotenv()
 
 app = Flask(__name__)
+@app.before_request
+def before_request():
+
+    assign_request_id()
+
+@app.after_request
+def add_security_headers(response):
+
+    response.headers[
+        "X-Content-Type-Options"
+    ] = "nosniff"
+
+    response.headers[
+        "X-Frame-Options"
+    ] = "DENY"
+
+    response.headers[
+        "X-XSS-Protection"
+    ] = "1; mode=block"
+
+    return response
 limiter.init_app(app)
 
 CORS(app)
@@ -208,6 +232,8 @@ app.register_blueprint(
     backup_bp,
     url_prefix="/api/v1"
 )
+
+
 @app.before_request
 def before_request():
 

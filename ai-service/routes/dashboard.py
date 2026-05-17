@@ -5,7 +5,9 @@ from flask_jwt_extended import (
 )
 
 from flasgger import swag_from
-
+from middleware.api_key import (
+    validate_api_key
+)
 from database.db import (
     get_connection
 )
@@ -25,6 +27,16 @@ dashboard_bp = Blueprint(
         }
     ],
 
+    "parameters": [
+        {
+            "name": "x-api-key",
+            "in": "header",
+            "type": "string",
+            "required": True,
+            "default": "patch_secure_2026"
+        }
+    ],
+
     "responses": {
         200: {
             "description": (
@@ -39,6 +51,12 @@ dashboard_bp = Blueprint(
 )
 @jwt_required()
 def dashboard():
+    api_key_error = (
+        validate_api_key()
+    )
+    
+    if api_key_error:
+        return api_key_error
 
     connection = get_connection()
 
